@@ -18,4 +18,3 @@ def handler(message):
         bot.send_message(message.from_user.id,
                          'Чтобы узнать дивиденды по акции за последные 4 года, введите тикер '
                          'или выберите из тикеров в меню', reply_markup=div_menu())
-

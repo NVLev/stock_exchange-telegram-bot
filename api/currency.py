@@ -1,4 +1,3 @@
-import requests
 from config_data.config import API_BASE_URL
 import requests
 from bs4 import BeautifulSoup
@@ -6,7 +5,6 @@ from bs4 import BeautifulSoup
 
 class CurrencyInfo:
     moex_dict = {"CNY": 'CNYRUB_TOM', #Китайский юань
-                 "HKD": 'HKDRUB_TOM', #Гонконгский доллар
                  "TRY": 'TRYRUB_TOM', #Турецкая лира
                  "BYN": 'BYNRUB_TOM', #Белорусский рубль
                  "KZT": 'KZTRUB_TOM', #Казахстанский тенге

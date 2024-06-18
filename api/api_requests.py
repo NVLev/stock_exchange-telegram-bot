@@ -1,33 +1,37 @@
-
 from config_data.config import API_BASE_URL
 import pandas as pd
-import json
+# import json
+import csv
+import codecs
 import requests
 from urllib import parse
 
 pd.set_option("display.max_columns", 15)
-# Список бумаг торгуемых на московской бирже
-    # https://iss.moex.com/iss/reference/5
-    # r_list = query("securities")
-    #r_list = query("securities", q="сбер")  # q='' - поиск всех бумаг, содержащих ''
-    # j = query("securities", group_by="type", group_by_filter="corporate_bond", limit=10)
-    # j = query("securities", q="втб", group_by="type", group_by_filter="corporate_bond", limit=10)
-    #flat = flatten(r_list, 'securities')
 
-    # Спецификация инструмента
-    # https://iss.moex.com/iss/reference/13
-    # secid = 'SBER'
-    # method = "securities/%s" % secid
-    # j = query(method)
-    # flat = flatten(j, 'description')
 
-    # Купоны по облигациям
-    # ** описания нет
-    # secid = 'RU000A102QJ7'
-    # method = "securities/%s/bondization" % secid
-    # j = query(method)
-    # f = flatten(j, 'coupons')
+def from_csv_to_list(file_name):
+    with codecs.open(file_name, "r", "utf-8") as file:
+        reader = sum(list(csv.reader(file, skipinitialspace=True)), [])
+    return reader
 
+
+tickers_list = from_csv_to_list("tickers.csv")
+
+
+# request_url = ('https://iss.moex.com/iss/engines/stock/'
+#                'markets/shares/boards/TQBR/securities.json')
+# arguments = {'securities.columns': ('SECID,'
+#                                     'REGNUMBER,'
+#                                     'LOTSIZE,'
+#                                     'SHORTNAME')}
+# with requests.Session() as session:
+#     iss = apimoex.ISSClient(session, request_url, arguments)
+#     data = iss.get()
+#     df = pd.DataFrame(data['securities'])
+#     df.set_index('SECID', inplace=True)
+#     print(df.head(), '\n')
+#     print(df.tail(), '\n')
+#     df.info()
 
 def query(method: str, **kwargs):
     """
@@ -56,11 +60,20 @@ def flatten(response_dict: dict, blockname: str):
     :param blockname:
     :return:
     """
-    return [{k: r[i] for i, k in enumerate(response_dict[blockname]['columns'])} for r in response_dict[blockname]['data']]
+    return [{k: r[i] for i, k in enumerate(response_dict[blockname]['columns'])}
+            for r in response_dict[blockname]['data']]
+
+
+# "https://iss.moex.com/iss/%s.json"
+def stock_list():
+    # Список бумаг торгуемых на московской бирже
+    r_list = query("securities", group_by="type", group_by_filter="common_share",
+                   limit=60)
+    flat = flatten(r_list, 'securities')
+    print(pd.DataFrame(flat, columns=['secid', 'shortname']))
 
 
 def dividends(secid):
-
     # Дивиденды по акциям
     # ** описания нет
     # secid = 'GAZP'
@@ -68,10 +81,11 @@ def dividends(secid):
     j = query(method)
     flat = flatten(j, 'dividends')
 
-    return (pd.DataFrame(flat))
+    print(pd.DataFrame(flat))
     # print(pd.DataFrame(f, columns=['secid','shortname' ,'primary_boardid', 'type']))
     # print(json.dumps(j, ensure_ascii=False, indent=4, sort_keys=True))
 
 
-# if __name__ == '__main__':
+if __name__ == '__main__':
     # dividends('GAZP')
+    stock_list()

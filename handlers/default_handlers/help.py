@@ -1,7 +1,7 @@
 from loader import bot
 from states.custom_states import Menu_states
 from telebot.types import Message
-from keyboards.reply.tikers import div_menu
+from keyboards.reply.tiсkers import div_menu
 
 from config_data.config import DEFAULT_COMMANDS
 

@@ -1,1 +1,1 @@
-from . import default, tikers
+from . import default, tiсkers

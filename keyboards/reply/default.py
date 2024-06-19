@@ -7,7 +7,8 @@ def start_button() -> ReplyKeyboardMarkup:
     keyboard.add(KeyboardButton("Что я могу"))
     return keyboard
 
-def menu() -> ReplyKeyboardMarkup:
+def main_menu() -> ReplyKeyboardMarkup:
+    '''Создает Главное меню, которое появляется при нажатии start'''
     source_markup = ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
     source_markup_btn1 = types.KeyboardButton('Дивиденды по акции')
     source_markup_btn2 = types.KeyboardButton('Купоны по облигации')

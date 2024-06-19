@@ -15,7 +15,8 @@ def from_csv_to_list(file_name):
     return reader
 
 
-tickers_list = from_csv_to_list("tickers.csv")
+# tickers_list = from_csv_to_list("tickers.txt")
+# print(tickers_list)
 
 
 # request_url = ('https://iss.moex.com/iss/engines/stock/'

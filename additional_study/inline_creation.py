@@ -121,4 +121,4 @@ def handle_buttons(callback_query):
 
 # Перед запуском бота подключаем фильтр состояний.
 bot.add_custom_filter(StateFilter(bot))
-bot.infinity_polling()
+# bot.infinity_polling()

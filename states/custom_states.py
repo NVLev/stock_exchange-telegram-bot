@@ -12,7 +12,10 @@ from telebot.storage import StateMemoryStorage
 state_storage = StateMemoryStorage()
 
 class Menu_states(StatesGroup):
-    dividends = State()
+    start = State()
+    waiting_for_ticker = State()
+    dividend_result = State()
+    ticker_input = State()
     currency = State()
     stock = State()
 

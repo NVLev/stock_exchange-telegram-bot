@@ -75,4 +75,4 @@ def text_supergroup_currency(message):
     bot.reply_to(message, "Done!", reply_markup=markup)
 
 
-bot.infinity_polling()
+# bot.infinity_polling()

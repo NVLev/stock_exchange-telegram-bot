@@ -1,6 +1,10 @@
 import os
 from dotenv import load_dotenv, find_dotenv
+import logging
 
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 if not find_dotenv():
     exit("Переменные окружения не загружены т.к отсутствует файл .env")

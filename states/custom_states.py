@@ -1,7 +1,7 @@
 import telebot # telebot
 
 from telebot import custom_filters
-from telebot.handler_backends import State, StatesGroup #States
+from telebot.handler_backends import State, StatesGroup  # States
 
 # States storage
 from telebot.storage import StateMemoryStorage

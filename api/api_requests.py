@@ -1,21 +1,17 @@
 from config_data.config import API_BASE_URL
 import pandas as pd
 # import json
-import csv
-import codecs
+from tabulate import tabulate
 import requests
 from urllib import parse
 
 pd.set_option("display.max_columns", 15)
 
 
-def from_csv_to_list(file_name):
-    with codecs.open(file_name, "r", "utf-8") as file:
-        reader = sum(list(csv.reader(file, skipinitialspace=True)), [])
-    return reader
 
 
-# tickers_list = from_csv_to_list("tickers.txt")
+
+# tickers_list = from_csv_to_list("tickers.csv")
 # print(tickers_list)
 
 
@@ -66,27 +62,27 @@ def flatten(response_dict: dict, blockname: str):
 
 
 # "https://iss.moex.com/iss/%s.json"
-def stock_list():
-    # Список бумаг торгуемых на московской бирже
-    r_list = query("securities", group_by="type", group_by_filter="common_share",
-                   limit=60)
-    flat = flatten(r_list, 'securities')
-    print(pd.DataFrame(flat, columns=['secid', 'shortname']))
+# def stock_list():
+#     # Список бумаг торгуемых на московской бирже
+#     r_list = query("securities", group_by="type", group_by_filter="common_share",
+#                    limit=60)
+#     flat = flatten(r_list, 'securities')
+#     print(pd.DataFrame(flat, columns=['secid', 'shortname']))
 
 
 def dividends(secid):
-    # Дивиденды по акциям
-    # ** описания нет
-    # secid = 'GAZP'
     method = "securities/%s/dividends" % secid
     j = query(method)
     flat = flatten(j, 'dividends')
-
-    print(pd.DataFrame(flat))
+    # print(pd.DataFrame(flat))
+    # print(flat)
+    return flat
+    # return (pd.DataFrame(flat))
     # print(pd.DataFrame(f, columns=['secid','shortname' ,'primary_boardid', 'type']))
-    # print(json.dumps(j, ensure_ascii=False, indent=4, sort_keys=True))
+    # print(json.dumps(j, ensure_ascii=False, indent=4, sort_keys=True)
+
 
 
 if __name__ == '__main__':
-    # dividends('GAZP')
-    stock_list()
+     dividends('GAZP')
+#     stock_list()

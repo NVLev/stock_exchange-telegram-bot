@@ -1,1 +1,1 @@
-from . import default, tiсkers
+from . import default, tiсkers, rate, stock_keyboard

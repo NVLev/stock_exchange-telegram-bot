@@ -1,34 +1,24 @@
 from config_data.config import API_BASE_URL
 import pandas as pd
 # import json
+import codecs
+import os
+import csv
 from tabulate import tabulate
 import requests
 from urllib import parse
+
+
+def from_csv_to_list():
+    with codecs.open(os.path.dirname(os.path.abspath(__file__))
+                     + "\\tickers.csv", "r", "utf-8") as file:
+        reader = sum(list(csv.reader(file, skipinitialspace=True)), [])
+    return reader
 
 pd.set_option("display.max_columns", 15)
 
 
 
-
-
-# tickers_list = from_csv_to_list("tickers.csv")
-# print(tickers_list)
-
-
-# request_url = ('https://iss.moex.com/iss/engines/stock/'
-#                'markets/shares/boards/TQBR/securities.json')
-# arguments = {'securities.columns': ('SECID,'
-#                                     'REGNUMBER,'
-#                                     'LOTSIZE,'
-#                                     'SHORTNAME')}
-# with requests.Session() as session:
-#     iss = apimoex.ISSClient(session, request_url, arguments)
-#     data = iss.get()
-#     df = pd.DataFrame(data['securities'])
-#     df.set_index('SECID', inplace=True)
-#     print(df.head(), '\n')
-#     print(df.tail(), '\n')
-#     df.info()
 
 def query(method: str, **kwargs):
     """
@@ -74,15 +64,27 @@ def dividends(secid):
     method = "securities/%s/dividends" % secid
     j = query(method)
     flat = flatten(j, 'dividends')
-    # print(pd.DataFrame(flat))
+    # print(pd.DataFrame(flat, columns=['secid', 'registryclosedate', 'value', 'currencyid']))
     # print(flat)
-    return flat
+    return pd.DataFrame(flat, columns=['secid', 'registryclosedate', 'value', 'currencyid'])
     # return (pd.DataFrame(flat))
     # print(pd.DataFrame(f, columns=['secid','shortname' ,'primary_boardid', 'type']))
     # print(json.dumps(j, ensure_ascii=False, indent=4, sort_keys=True)
 
 
+def instrument(secid):
+    method = 'engines/stock/markets/shares/boards/TQBR/securities/%s' % secid
+    j = query(method)
+    flat = flatten(j, 'securities')
+    return pd.DataFrame(flat)
+        #pd.DataFrame(flat, columns=['secid', 'shortname', 'closeprice', 'settledate']))
+
 
 if __name__ == '__main__':
-     dividends('GAZP')
-#     stock_list()
+        df = instrument('SBER')
+        print(df)
+        table = df.to_string(columns=['secid', 'shortname', 'closeprice', 'settledate'],
+                             index=False, header=False, line_width=70,
+                             justify='left')
+        print(table)
+# # # # #     stock_list()

@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv, find_dotenv
 import logging
 
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,8 @@ RAPID_API_KEY = os.getenv("RAPID_API_KEY")
 DEFAULT_COMMANDS = (
     ("start", "Запуск бота"),
     ("help", "Обзор команд"),
-    ("dividends", "Дивиденды по акциям")
+    ("dividends", "Дивиденды по акциям"),
+    ('curency', 'Курс валют по ЦБ РФ')
     # из состояний - кастомные команды
 )
 API_BASE_URL = "https://iss.moex.com/iss/%s.json"

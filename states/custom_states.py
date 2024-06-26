@@ -17,6 +17,7 @@ class Menu_states(StatesGroup):
     dividend_result = State()
     ticker_input = State()
     currency = State()
+    waiting_for_stocks_choice = State()
     stock = State()
 
 

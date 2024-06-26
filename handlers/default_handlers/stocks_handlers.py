@@ -1,26 +1,40 @@
-
-from api.api_requests import from_csv_to_list, instrument
+from api.api_requests import from_csv_to_list
+import api.api_requests
 from loader import bot
 from telebot.types import Message
-import reticker
 from keyboards.inline.stocks_choices import stocks_choice
 from keyboards.reply.default import main_menu
-from keyboards.reply.stock_keyboard import stocks_menu
+from keyboards.reply.stock_keyboard import stock_ticker_menu
 from config_data.config import logger
 from states.custom_states import Menu_states
 
+
 # user жмет акции - появляется меню - ввести тикер/выбрать/я не знаю тикер
 # выбрать - меню (10-15 тикеров)
-# поиск по названию - поработать с запросом
+# поиск по названию - поработать с запросом + доп. инлайн меню (Теперь знаете тикер)
+# доп. - поработать с empty dataframe
 
 def stocks_handler1(message: Message) -> None:
     answer = message.text
     if answer == 'Знаю тикер':
         message_know = bot.send_message(message.from_user.id,
-                               'Я весь внимание',
-                               )
+                                        'Я весь внимание',
+                                        )
         bot.set_state(message.from_user.id, Menu_states.waiting_for_stocks_choice, message.chat.id)
         bot.register_next_step_handler(message_know, stocks_handler2)
+    elif answer == 'Хочу выбрать из того, что есть':
+        message_know = bot.send_message(message.from_user.id,
+                                        'Я знаю котировки по 10 акциям из народного портфеля.  Выбирайте',
+                                        reply_markup=stock_ticker_menu()
+                                        )
+        bot.set_state(message.from_user.id, Menu_states.waiting_for_stocks_choice, message.chat.id)
+        bot.register_next_step_handler(message_know, stocks_handler2)
+    elif answer == 'Что-то хочу, но тикер не знаю':
+        message_smth = bot.send_message(message.from_user.id,
+                                        'Так-так... Ну попробуйте ввести часть названия'
+                                        )
+        bot.set_state(message.from_user.id, Menu_states.waiting_for_stocks_choice, message.chat.id)
+        bot.register_next_step_handler(message_smth, stocks_handler3)
 
 
 def stocks_handler2(message: Message) -> None:
@@ -44,11 +58,15 @@ def stocks_handler2(message: Message) -> None:
                              "Такой акции я не знаю, посмотрите список:"
                              "\n https://www.moex.com/ru/listing/securities-list.aspx"
                              )
+            bot.send_message(message.from_user.id,
+                             'Хотите узнать ещё котировку или перейти в главное меню?',
+                             reply_markup=stocks_choice()
+                             )
         else:
             logger.info("всё верно")
             try:
-                df = instrument(ticker)
-                table = df.to_string(columns=['secid', 'shortname', 'closeprice', 'settledate'],
+                df = api.api_requests.instrument(ticker)
+                table = df.to_string(columns=['SECID', 'SHORTNAME', 'PREVLEGALCLOSEPRICE', 'SETTLEDATE'],
                                      index=False, header=False, line_width=70,
                                      justify='left')
                 bot.send_message(message.from_user.id, table)
@@ -64,6 +82,31 @@ def stocks_handler2(message: Message) -> None:
     else:
         logger.info(bot.get_state(message.from_user.id, message.chat.id))
 
+def stocks_handler3(message: Message) -> None:
+    chat_id = message.chat.id
+    current_state = bot.get_state(message.from_user.id, chat_id)
+    if current_state == 'Menu_states:waiting_for_stocks_choice':
+        logger.info("проверено - waiting_for_stocks_choice")
+        smth = message.text.lower()
+        logger.info(smth)
+        try:
+            df = api.api_requests. stocks_list(smth)
+            table = df.to_string(columns=['secid', 'name'],
+                                 index=False, header=False, line_width=30,
+                                 justify='center')
+            bot.send_message(message.from_user.id, table)
+            bot.send_message(message.from_user.id,
+                             'Хотите узнать ещё котировку или перейти в главное меню?',
+                             reply_markup=stocks_choice()
+                             )
+        except Exception as e:
+            bot.send_message(message.from_user.id,
+                             'Что-то пошло не так, вы перешли в главное меню',
+                             reply_markup=main_menu())
+            return None
+    else:
+        logger.info(bot.get_state(message.from_user.id, message.chat.id))
+
 @bot.callback_query_handler(func=lambda callback_query: (
         callback_query.data == "more_stock"))
 def answer_good(callback_query):
@@ -73,12 +116,14 @@ def answer_good(callback_query):
     msg5 = bot.send_message(callback_query.from_user.id, 'OK')
     bot.register_next_step_handler(msg5, stocks_handler1)
     logger.info("ещё")
+
+
 @bot.callback_query_handler(func=lambda callback_query: (
-                callback_query.data == "cur_return"))
+        callback_query.data == 'stock_return'))
 def answer_return(callback_query):
     bot.edit_message_reply_markup(
         callback_query.from_user.id, callback_query.message.message_id
     )
-    bot.send_message(callback_query.from_user.id,'Вы вернулись в главное меню',
+    bot.send_message(callback_query.from_user.id, 'Вы вернулись в главное меню',
                      reply_markup=main_menu())
     logger.info("возврат")

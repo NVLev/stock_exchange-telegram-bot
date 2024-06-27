@@ -17,12 +17,11 @@ def from_csv_to_list():
         reader = sum(list(csv.reader(file, skipinitialspace=True)), [])
     return reader
 
+
 pd.set_option("display.max_columns", 15)
 
 
-
-
-def query(method: str, **kwargs) -> dict:
+def query(method: str, **kwargs):
     """
     Функция для отправки запроса к ISS MOEX
     :param method:
@@ -67,7 +66,8 @@ def dividends(secid):
     j = query(method)
     flat = flatten(j, 'dividends')
     # print(pd.DataFrame(flat, columns=['secid', 'registryclosedate', 'value', 'currencyid']))
-    # print(flat)
+    if not flat:
+        flat = [{'secid': 'Компания', 'registryclosedate': 'не', 'value': 'выплачивала', 'currencyid': 'дивиденды'}]
     return pd.DataFrame(flat, columns=['secid', 'registryclosedate', 'value', 'currencyid'])
     # return (pd.DataFrame(flat))
     # print(pd.DataFrame(f, columns=['secid','shortname' ,'primary_boardid', 'type']))
@@ -80,7 +80,8 @@ def instrument(secid: str) -> pd.DataFrame:
     logger.info('пройдено - query')
     flat = flatten(j, 'securities')
     return pd.DataFrame(flat, columns=['SECID', 'SHORTNAME', 'PREVLEGALCLOSEPRICE', 'SETTLEDATE'])
-        #pd.DataFrame(flat, columns=['secid', 'shortname', 'closeprice', 'settledate']))
+    # pd.DataFrame(flat, columns=['secid', 'shortname', 'closeprice', 'settledate']))
+
 
 def stocks_list(name: str) -> pd.DataFrame:
     """Список бумаг торгуемых на московской бирже"""
@@ -94,11 +95,10 @@ def stocks_list(name: str) -> pd.DataFrame:
             short_list.append(stock)
     return pd.DataFrame(short_list, columns=['secid', 'name'])
 
-# if __name__ == '__main__':
-#         df = stocks_list('сбер')
-#         # print(df)
-#         table = df.to_string(columns=['secid', 'name'],
-#                              index=False, header=False, line_width=70,
-#                              justify='left')
-#         print(table)
-
+if __name__ == '__main__':
+        df = stocks_list('втб')
+        print(df)
+        table = df.to_string(columns=['secid', 'name'],
+                             index=False, header=False, line_width=70,
+                             justify='left')
+        print(table)

@@ -2,9 +2,9 @@ from api.api_requests import from_csv_to_list
 import api.api_requests
 from loader import bot
 from telebot.types import Message
-from keyboards.inline.stocks_choices import stocks_choice
+from keyboards.inline.stocks_choices import stocks_choice, after_search
 from keyboards.reply.default import main_menu
-from keyboards.reply.stock_keyboard import stock_ticker_menu
+from keyboards.reply.stock_keyboard import stock_ticker_menu, stocks_menu
 from config_data.config import logger
 from states.custom_states import Menu_states
 
@@ -15,6 +15,7 @@ from states.custom_states import Menu_states
 # доп. - поработать с empty dataframe
 
 def stocks_handler1(message: Message) -> None:
+    logger.info("Юзер перешел в меню по акциям")
     answer = message.text
     if answer == 'Знаю тикер':
         message_know = bot.send_message(message.from_user.id,
@@ -33,7 +34,8 @@ def stocks_handler1(message: Message) -> None:
         message_smth = bot.send_message(message.from_user.id,
                                         'Так-так... Ну попробуйте ввести часть названия'
                                         )
-        bot.set_state(message.from_user.id, Menu_states.waiting_for_stocks_choice, message.chat.id)
+        bot.set_state(message.from_user.id, Menu_states.waiting_for_stocks_choice,
+                      message.chat.id)
         bot.register_next_step_handler(message_smth, stocks_handler3)
 
 
@@ -82,6 +84,7 @@ def stocks_handler2(message: Message) -> None:
     else:
         logger.info(bot.get_state(message.from_user.id, message.chat.id))
 
+
 def stocks_handler3(message: Message) -> None:
     chat_id = message.chat.id
     current_state = bot.get_state(message.from_user.id, chat_id)
@@ -90,14 +93,14 @@ def stocks_handler3(message: Message) -> None:
         smth = message.text.lower()
         logger.info(smth)
         try:
-            df = api.api_requests. stocks_list(smth)
+            df = api.api_requests.stocks_list(smth)
             table = df.to_string(columns=['secid', 'name'],
-                                 index=False, header=False, line_width=30,
+                                 index=False, header=False, line_width=80,
                                  justify='center')
             bot.send_message(message.from_user.id, table)
             bot.send_message(message.from_user.id,
-                             'Хотите узнать ещё котировку или перейти в главное меню?',
-                             reply_markup=stocks_choice()
+                             'Теперь вы знаете тикер?',
+                             reply_markup=after_search()
                              )
         except Exception as e:
             bot.send_message(message.from_user.id,
@@ -107,13 +110,14 @@ def stocks_handler3(message: Message) -> None:
     else:
         logger.info(bot.get_state(message.from_user.id, message.chat.id))
 
+
 @bot.callback_query_handler(func=lambda callback_query: (
         callback_query.data == "more_stock"))
 def answer_good(callback_query):
     bot.edit_message_reply_markup(
         callback_query.from_user.id, callback_query.message.message_id
     )
-    msg5 = bot.send_message(callback_query.from_user.id, 'OK')
+    msg5 = bot.send_message(callback_query.from_user.id, 'OK', reply_markup=stocks_menu())
     bot.register_next_step_handler(msg5, stocks_handler1)
     logger.info("ещё")
 
@@ -127,3 +131,31 @@ def answer_return(callback_query):
     bot.send_message(callback_query.from_user.id, 'Вы вернулись в главное меню',
                      reply_markup=main_menu())
     logger.info("возврат")
+
+
+bot.callback_query_handler(func=lambda callback_query: (
+        callback_query.data == "yes"))
+
+
+def answer_yes(callback_query):
+    bot.edit_message_reply_markup(
+        callback_query.from_user.id, callback_query.message.message_id
+    )
+    y_msg = bot.send_message(callback_query.from_user.id, 'Прекрасно, возвращаю меню акций',
+                             reply_markup=stocks_menu())
+    bot.register_next_step_handler(y_msg, stocks_handler1)
+    logger.info("получилось")
+
+
+bot.callback_query_handler(func=lambda callback_query: (
+        callback_query.data == 'no'))
+
+
+def answer_no(callback_query):
+    bot.edit_message_reply_markup(
+        callback_query.from_user.id, callback_query.message.message_id
+    )
+    no_msg = bot.send_message(callback_query.from_user.id, 'Можно попробовать ещё',
+                              reply_markup=stocks_menu())
+    bot.register_next_step_handler(no_msg, stocks_handler1)
+    logger.info("получилось")

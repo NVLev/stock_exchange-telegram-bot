@@ -1,6 +1,7 @@
 import api.api_requests
 from api.api_requests import from_csv_to_list
 from . import stocks_handlers
+import html
 from loader import bot
 from states.custom_states import Menu_states
 from telebot.types import Message
@@ -9,8 +10,9 @@ from keyboards.reply.tiсkers import div_menu
 from keyboards.reply.rate import rate_menu
 from keyboards.inline.div_choice import div_return
 from keyboards.reply.stock_keyboard import stocks_menu
+from database.chat_data import db_table_val
 # from keyboards.inline.stocks_3choices import stocks_choice
-
+from datetime import datetime, timezone, timedelta
 import csv
 from config_data.config import logger
 import os
@@ -37,6 +39,9 @@ def div_handler(message: Message) -> None:
 @bot.message_handler(content_types=['text'])
 def handler(message: Message) -> None:
     """Обрабатывает главное меню"""
+    now = datetime.now(timezone.utc)
+    date = now.date()
+    db_table_val(message.chat.id, date, message.from_user.username)
     if message.text == "Дивиденды по акции":
         logger.info("User запросил дивиденды")
         msg = bot.send_message(message.from_user.id,
@@ -62,17 +67,17 @@ def handler(message: Message) -> None:
     elif message.text == 'Подробнее':
         logger.info("User запросил информацию")
         bot.send_message(message.from_user.id,
-                         '"Дивиденды по акциям" - покажу все дивиденды, которые'
+                         '<b>"Дивиденды по акциям"</b> - покажу все дивиденды, которые '
                          'выплачивала компания последние несколько лет (от 5 до 10, '
                          'если выплачивала, конечно), а также предстоящие дивиденды '
-                         'в этом году, если по ним принято решение'
-                         'в формате - ТИКЕР - дата - сумма.  Для получения информации'
-                         'надо ввести тикер, но 9 тикеров я для вас уже приготовил.'
-                         'Лайфхак - если не знаете тикер, можно попробовать его найти'
-                         'в разделе "Котировка акций", выбрав соответствующую команду'
-                         '"Курсы валют" - здесь всё просто, 8 валют, информация '
-                         'представлена в виде id валюты - наименование - курс в рублях'
-                         '"Котировка акций" - можно ввести тикер, выбрать из 10'
+                         'в этом году, если по ним принято решение\n'
+                         '<b>формат</b> - ТИКЕР - дата - сумма.  \n  Для получения информации '
+                         'надо ввести тикер, но 9 тикеров я для вас уже приготовил.\n'
+                         '<i>Лайфхак - если не знаете тикер, можно попробовать его найти '
+                         'в разделе "Котировка акций", выбрав соответствующую команду</i> \n'
+                         '<b>"Курсы валют"</b> - здесь всё просто, 8 валют, информация '
+                         'представлена в виде id валюты - наименование - курс в рублях \n'
+                         '<b>"Котировка акций"</b> - можно ввести тикер, выбрать из 10 '
                          'самых популярных акций или поискать тикер по названию.')
 
 

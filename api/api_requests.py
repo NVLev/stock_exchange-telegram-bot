@@ -79,6 +79,9 @@ def instrument(secid: str) -> pd.DataFrame:
     j = query(method)
     logger.info('пройдено - query')
     flat = flatten(j, 'securities')
+    if not flat:
+        flat = [{'SECID': 'Я', 'SHORTNAME': 'не нашел', 'PREVLEGALCLOSEPRICE': 'ничего', 'SETTLEDATE': 'по этой '
+                                                                                                       'компании'}]
     return pd.DataFrame(flat, columns=['SECID', 'SHORTNAME', 'PREVLEGALCLOSEPRICE', 'SETTLEDATE'])
     # pd.DataFrame(flat, columns=['secid', 'shortname', 'closeprice', 'settledate']))
 
@@ -93,12 +96,16 @@ def stocks_list(name: str) -> pd.DataFrame:
     for stock in flat:
         if len(stock['secid']) == 4 or len(stock['secid']) == 5:
             short_list.append(stock)
+    if not short_list:
+        short_list = [{'secid': 'Ничего', 'name': 'не найдено'}]
     return pd.DataFrame(short_list, columns=['secid', 'name'])
 
-if __name__ == '__main__':
-        df = stocks_list('втб')
-        print(df)
-        table = df.to_string(columns=['secid', 'name'],
-                             index=False, header=False, line_width=70,
-                             justify='left')
-        print(table)
+# if __name__ == '__main__':
+#         df = stocks_list('втб')
+#         print(df)
+#         table = df.to_string(columns=['secid', 'name'],
+#                              index=False, header=False, line_width=70,
+#                              justify='left')
+#         print(table)
+# query error('Connection aborted.', ConnectionResetError(10054,
+# 'An existing connection was forcibly closed by the remote host', None, 10054, None))

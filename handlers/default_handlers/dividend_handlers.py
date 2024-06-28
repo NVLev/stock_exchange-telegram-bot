@@ -1,24 +1,17 @@
+# from keyboards.inline.stocks_3choices import stocks_choice
+from telebot.types import Message
 import api.api_requests
 from api.api_requests import from_csv_to_list
-from . import stocks_handlers
-import html
+from config_data.config import logger
+from database.chat_pewee import User
+from keyboards.inline.div_choice import div_return
+from keyboards.reply.default import main_menu
+from keyboards.reply.rate import rate_menu
+from keyboards.reply.stock_keyboard import stocks_menu
+from keyboards.reply.tiсkers import div_menu
 from loader import bot
 from states.custom_states import Menu_states
-from telebot.types import Message
-from keyboards.reply.default import main_menu
-from keyboards.reply.tiсkers import div_menu
-from keyboards.reply.rate import rate_menu
-from keyboards.inline.div_choice import div_return
-from keyboards.reply.stock_keyboard import stocks_menu
-from database.chat_data import db_table_val
-# from keyboards.inline.stocks_3choices import stocks_choice
-from datetime import datetime, timezone, timedelta
-import csv
-from config_data.config import logger
-import os
 from . import currency_rate, stocks_handlers
-
-
 
 from_csv_to_list()
 
@@ -31,19 +24,29 @@ def div_handler(message: Message) -> None:
     информацию по дивидендам командой
     """
     bot.set_state(message.from_user.id, Menu_states.waiting_for_ticker, message.chat.id)
-    bot.send_message(message.from_user.id,
-                     'Чтобы узнать дивиденды по акции за последные 4 года, введите тикер '
-                     'или выберите из тикеров в меню', reply_markup=div_menu())
+    logger.info('dividends command')
+    div_msg = bot.send_message(message.from_user.id,
+                               'Чтобы узнать дивиденды по акции за последные 4 года, введите тикер '
+                               'или выберите из тикеров в меню', reply_markup=div_menu())
+    bot.set_state(message.from_user.id, Menu_states.waiting_for_ticker, message.chat.id)
+    User.create(
+        user_id=message.from_user.id,
+        username=message.from_user.username,
+        msg=message.text
+    )
+    bot.register_next_step_handler(div_msg, dividend_handler)
 
 
 @bot.message_handler(content_types=['text'])
 def handler(message: Message) -> None:
     """Обрабатывает главное меню"""
-    now = datetime.now(timezone.utc)
-    date = now.date()
-    db_table_val(message.chat.id, date, message.from_user.username)
     if message.text == "Дивиденды по акции":
         logger.info("User запросил дивиденды")
+        User.create(
+            user_id=message.from_user.id,
+            username=message.from_user.username,
+            msg=message.text
+        )
         msg = bot.send_message(message.from_user.id,
                                'Чтобы узнать дивиденды по акции за последные годы, введите тикер '
                                'или выберите из тикеров в меню', reply_markup=div_menu())
@@ -51,17 +54,27 @@ def handler(message: Message) -> None:
         bot.register_next_step_handler(msg, dividend_handler)
     elif message.text == 'Курсы валют':
         logger.info("User запросил курсы валют")
+        User.create(
+            user_id=message.from_user.id,
+            username=message.from_user.username,
+            msg=message.text
+        )
         msg2 = bot.send_message(message.from_user.id,
-                               'Поскольку Московская биржа не проводит торги '
-                               'по самым интересным валютам, я возьму курсы у ЦБ РФ. '
-                               'Выбирай валюту, курс указан к рублю', reply_markup=rate_menu())
+                                'Поскольку Московская биржа не проводит торги '
+                                'по самым интересным валютам, я возьму курсы у ЦБ РФ. '
+                                'Выбирай валюту, курс указан к рублю', reply_markup=rate_menu())
         bot.set_state(message.from_user.id, Menu_states.currency, message.chat.id)
         bot.register_next_step_handler(msg2, currency_rate.currency_handler)
     elif message.text == 'Котировка акции':
         logger.info("User запросил курс акций")
+        User.create(
+            user_id=message.from_user.id,
+            username=message.from_user.username,
+            msg=message.text
+        )
         msg4 = bot.send_message(message.from_user.id,
-                               'Можете ввести тикер, выбрать из меню, '
-                               'попытаться найти тикер по названию',
+                                'Можете ввести тикер, выбрать из меню, '
+                                'попытаться найти тикер по названию',
                                 reply_markup=stocks_menu())
         bot.register_next_step_handler(msg4, stocks_handlers.stocks_handler1)
     elif message.text == 'Подробнее':
@@ -94,6 +107,11 @@ def dividend_handler(message: Message) -> None:
         logger.info("проверено - waiting_for_ticker")
         ticker = message.text.upper()
         logger.info(ticker)
+        User.create(
+            user_id=message.from_user.id,
+            username=message.from_user.username,
+            msg=message.text
+        )
         tickers_list = from_csv_to_list()
         if ticker not in tickers_list:
             logger.info("введено сообщение, тикера нет в списке")
@@ -136,13 +154,15 @@ def answer_good(callback_query):
     msg1 = bot.send_message(callback_query.from_user.id, 'OK')
     bot.register_next_step_handler(msg1, dividend_handler)
     logger.info("ещё")
+
+
 @bot.callback_query_handler(func=lambda callback_query: (
-                callback_query.data == "return"))
+        callback_query.data == "return"))
 def answer_return(callback_query):
     bot.edit_message_reply_markup(
         callback_query.from_user.id, callback_query.message.message_id
     )
-    bot.send_message(callback_query.from_user.id,'Вы вернулись в главное меню',
+    bot.send_message(callback_query.from_user.id, 'Вы вернулись в главное меню',
                      reply_markup=main_menu())
     logger.info("возврат")
     # bot.set_state(message.from_user.id, Menu_states.start, message.chat.id))

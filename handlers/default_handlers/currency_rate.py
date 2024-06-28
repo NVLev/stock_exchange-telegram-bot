@@ -1,10 +1,11 @@
-import api.cur_cbrf
-from loader import bot
 from telebot.types import Message
+from database.chat_pewee import User
+import api.cur_cbrf
+from config_data.config import logger
 from keyboards.inline.cur_choice import cur_return
 from keyboards.reply.default import main_menu
 from keyboards.reply.rate import rate_menu
-from config_data.config import logger
+from loader import bot
 from states.custom_states import Menu_states
 
 
@@ -15,12 +16,17 @@ def menu_currency_handler(message: Message) -> None:
     на тот случай, если user хочет вызвать курс валют командой
     """
     logger.info("команда currency")
-    msg2 = bot.send_message(message.from_user.id,
-                            'Поскольку Московская биржа не проводит торги '
-                            'по самым интересным валютам, я возьму курсы у ЦБ РФ. '
-                            'Выбирай валюту, курс указан к рублю', reply_markup=rate_menu())
+    User.create(
+        user_id=message.from_user.id,
+        username=message.from_user.username,
+        msg=message.text
+    )
+    cur_msg = bot.send_message(message.from_user.id,
+                               'Поскольку Московская биржа не проводит торги '
+                               'по самым интересным валютам, я возьму курсы у ЦБ РФ. '
+                               'Выбирай валюту, курс указан к рублю', reply_markup=rate_menu())
     bot.set_state(message.from_user.id, Menu_states.currency, message.chat.id)
-    bot.register_next_step_handler(msg2, currency_handler)
+    bot.register_next_step_handler(cur_msg, currency_handler)
 
 
 def currency_handler(message: Message) -> None:
@@ -34,6 +40,11 @@ def currency_handler(message: Message) -> None:
     if current_state == 'Menu_states:currency':
         logger.info("проверено - User хочет валюту))")
         cur_name = message.text
+        User.create(
+            user_id=message.from_user.id,
+            username=message.from_user.username,
+            msg=cur_name
+        )
         logger.info(cur_name)
         df_cur = api.cur_cbrf.get_currency_rate(cur_name)
         logger.info(df_cur)
